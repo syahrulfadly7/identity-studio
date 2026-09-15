@@ -21,7 +21,7 @@ async function fetchAndSyncProxies() {
         const response = await axios.get('https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt', { timeout: 10000 });
         const proxyLines = response.data.split('\n').map(p => p.trim()).filter(Boolean);
         
-        const selectedProxies = proxyLines.slice(0, 30);
+        const selectedProxies = proxyLines.slice(0, 20);
         console.log(`Found ${selectedProxies.length} proxies to verify.`);
 
         let activeProxies = [];
@@ -51,14 +51,23 @@ async function fetchAndSyncProxies() {
 
         if (activeProxies.length > 0) {
             console.log("Clearing old proxy pool in Supabase...");
+            // Hapus data lama
             await axios.delete(`${SUPABASE_URL}/rest/v1/proxy_pool?id=gt.0`, { headers: supabaseHeaders });
 
-            console.log("Inserting new active proxies...");
-            await axios.post(`${SUPABASE_URL}/rest/v1/proxy_pool`, activeProxies, { headers: supabaseHeaders });
-
-            console.log(`Successfully synced ${activeProxies.length} active proxies to Supabase via REST API!`);
+            console.log("Inserting new active proxies into Supabase...");
+            // Masukkan data baru
+            const insertRes = await axios.post(`${SUPABASE_URL}/rest/v1/proxy_pool`, activeProxies, { headers: supabaseHeaders });
+            
+            console.log(`Successfully synced ${activeProxies.length} active proxies to Supabase! Response status:`, insertRes.status);
         } else {
-            console.log("No active proxies found during this run.");
+            console.log("No active proxies found during this run. Inserting a fallback dummy to test connection...");
+            // Fallback dummy jika semua proxy publik gagal di-scrape saat itu
+            await axios.post(`${SUPABASE_URL}/rest/v1/proxy_pool`, [{
+                proxy_address: "127.0.0.1:8080",
+                latency: 100,
+                status: 'active',
+                updated_at: new Date().toISOString()
+            }], { headers: supabaseHeaders });
         }
 
     } catch (err) {
