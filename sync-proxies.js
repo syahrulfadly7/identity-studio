@@ -1,8 +1,4 @@
-// --- POLYFILL WEBSOCKET WAJIB AGAR LOLOS DI NODE 20 ---
 const WebSocket = require('ws');
-global.WebSocket = WebSocket;
-// -----------------------------------------------------
-
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -14,8 +10,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     process.exit(1);
 }
 
+// Mendaftarkan WebSocket secara eksplisit lewat opsi transport untuk Node.js versi lama
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false }
+    auth: { persistSession: false },
+    realtime: {
+        transport: WebSocket
+    }
 });
 
 async function fetchAndSyncProxies() {

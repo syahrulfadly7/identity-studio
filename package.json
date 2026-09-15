@@ -20,7 +20,8 @@
       "main.js",
       "index.html",
       "package.json",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "sync-proxies.js"
     ],
     "asar": true
   },
