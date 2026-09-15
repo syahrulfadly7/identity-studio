@@ -1,7 +1,7 @@
-// --- POLYFILL WEBSOCKET WAJIB UNTUK SUPABASE DI NODE.JS ---
+// --- POLYFILL WEBSOCKET WAJIB AGAR LOLOS DI NODE 20 ---
 const WebSocket = require('ws');
 global.WebSocket = WebSocket;
-// -----------------------------------------------------------
+// -----------------------------------------------------
 
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
