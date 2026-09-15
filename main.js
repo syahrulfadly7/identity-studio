@@ -1,13 +1,21 @@
+// --- POLYFILL WEBSOCKET UNTUK SUPABASE DI ELECTRON ---
+const WebSocket = require('ws');
+global.WebSocket = WebSocket;
+// ----------------------------------------------------
+
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 const { exec } = require('child_process');
 
-// Konfigurasi koneksi Supabase Anda (Gunakan URL & Anon Key dari Project Supabase Anda)
-const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Konfigurasi koneksi Supabase Anda
+const SUPABASE_URL = 'https://uajhjfftbziveljvnqdf.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_e7j5VAQ6OA1zpFAxdA3z6A_yjCa6ZVh';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false }
+});
 
 let mainWindow = null;
 
@@ -34,7 +42,7 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-// 1. Mengambil Proxy Bersih Langsung dari Supabase Server Pool Anda (Akurat & Cepat 100%)
+// 1. Mengambil Proxy Bersih Langsung dari Supabase Server Pool Anda
 ipcMain.handle('fetch-cloud-proxies', async (event) => {
     const startTime = Date.now();
     event.sender.send('scrape-log', 'Connecting to Traffic-Ex VIP Cloud Proxy Pool...');
@@ -75,7 +83,7 @@ ipcMain.handle('fetch-cloud-proxies', async (event) => {
     }
 });
 
-// 2. Live Online User-Agent Generator (Mengambil data browser terbaru dari database online + Fallback aman)
+// 2. Live Online User-Agent Generator
 ipcMain.handle('generate-uas', async (event, count = 20) => {
     let fetchedUAs = [];
     try {
@@ -84,7 +92,6 @@ ipcMain.handle('generate-uas', async (event, count = 20) => {
             fetchedUAs = response.data;
         }
     } catch (e) {
-        // Fallback cadangan jika jaringan offline
         fetchedUAs = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",

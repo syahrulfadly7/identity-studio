@@ -1,0 +1,28 @@
+name: Automated Proxy Pool Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Berjalan otomatis setiap 1 jam
+  workflow_dispatch: # Memungkinkan tombol "Run workflow" ditekan secara manual
+
+jobs:
+  sync-proxies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Proxy Scraper & Supabase Sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          node sync-proxies.js
