@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic-Ex Identity Studio • VIP Enterprise Utility</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            user-select: none;
+            background: #090d16;
+            color: #e2e8f0;
+        }
+
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 6px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); border-color: rgba(59, 130, 246, 0.8); }
+        }
+
+        .processing-glow {
+            animation: pulse-glow 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col justify-between p-4 selection:bg-blue-500/30">
+
+    <!-- Top Navigation Header -->
+    <header class="glass-card rounded-2xl p-3.5 shadow-xl flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-black">
+                <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm font-black tracking-tight text-white">Identity Studio</h1>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 tracking-wide">ENTERPRISE CLOUD</span>
+                </div>
+                <p class="text-[10px] text-slate-400 font-medium">Supabase Proxy Pool & Live UA Generator</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="my-3 space-y-3 flex-1 overflow-y-auto pr-1">
+
+        <!-- Tab Switcher -->
+        <div class="grid grid-cols-2 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+            <button id="tab-proxy" onclick="switchTab('proxy')" class="py-2 text-xs font-bold rounded-xl bg-blue-600 text-white transition flex items-center justify-center gap-1.5 shadow-md">
+                <i data-lucide="database" class="w-4 h-4"></i> Cloud Proxy Pool
+            </button>
+            <button id="tab-ua" onclick="switchTab('ua')" class="py-2 text-xs font-bold rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4"></i> User-Agent Generator
+            </button>
+        </div>
+
+        <!-- Section 1: Supabase Cloud Proxy Pool -->
+        <section id="section-proxy" class="glass-card rounded-2xl p-3.5 space-y-2.5 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Server Pool Source</label>
+                    <p class="text-[10px] text-blue-400">Sync proxy bersih siap pakai dari Supabase Cloud</p>
+                </div>
+                <button id="btn-sync" class="px-3.5 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-bold text-[11px] rounded-xl transition flex items-center gap-1.5 group">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 group-hover:rotate-180 transition duration-500"></i> Sync Cloud Proxies
+                </button>
+            </div>
+
+            <!-- Live Status & Statistics Panel -->
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 text-center">
+                <div>
+                    <span class="text-[9px] text-slate-500 block uppercase font-bold">Synced Total</span>
+                    <span id="stat-total" class="text-xs font-bold text-white">0</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 block uppercase font-bold">Status Pool</span>
+                    <span id="stat-live" class="text-xs font-bold text-blue-400">Ready</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 block uppercase font-bold">Sync Duration</span>
+                    <span id="stat-duration" class="text-xs font-bold text-amber-400">0.00s</span>
+                </div>
+            </div>
+
+            <!-- Real-time Activity Log Terminal -->
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span id="log-indicator" class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span> Cloud Connection Logs
+                    </span>
+                </div>
+                <div id="log-terminal" class="w-full h-24 p-2 text-[10px] bg-slate-950 border border-slate-800 rounded-xl font-mono-code text-slate-400 overflow-y-auto">
+                    <span class="text-slate-600">System idle. Click 'Sync Cloud Proxies' to load database pool...</span>
+                </div>
+            </div>
+
+            <div class="space-y-1 pt-1 border-t border-slate-800">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cloud Verified Proxies (Ready to Export)</span>
+                    <button id="btn-export-proxy" class="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                        <i data-lucide="download" class="w-3 h-3"></i> Export to .txt
+                    </button>
+                </div>
+                <textarea id="output-proxies" rows="5" readonly placeholder="Synced cloud proxies will appear here instantly..." 
+                          class="w-full p-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl font-mono-code text-emerald-400 outline-none"></textarea>
+            </div>
+        </section>
+
+        <!-- Section 2: User-Agent Generator -->
+        <section id="section-ua" class="glass-card rounded-2xl p-4 space-y-3 hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Quantity to Generate</label>
+                    <p class="text-[10px] text-slate-500">Live online Chromium & Safari desktop signatures</p>
+                </div>
+                <input type="number" id="input-ua-count" min="5" max="100" value="20" 
+                       class="w-20 px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-center font-bold text-white font-mono-code outline-none">
+            </div>
+
+            <button id="btn-generate-ua" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center justify-center gap-1.5 group">
+                <i data-lucide="sparkles" class="w-4 h-4 group-hover:scale-125 transition duration-300"></i> Generate User-Agents Pool
+            </button>
+
+            <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Generated Pool</span>
+                    <button id="btn-export-ua" class="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        <i data-lucide="download" class="w-3 h-3"></i> Export to .txt
+                    </button>
+                </div>
+                <textarea id="output-uas" rows="8" readonly placeholder="Generated user-agents will appear here..." 
+                          class="w-full p-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl font-mono-code text-indigo-300 outline-none"></textarea>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-[10px] text-slate-500 pt-1 border-t border-slate-800/80">
+        Traffic-Ex Identity Studio &bull; Supabase Enterprise Engine
+    </footer>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let currentValidProxiesText = "";
+        let currentUAsText = "";
+        const logTerminal = document.getElementById('log-terminal');
+        const logIndicator = document.getElementById('log-indicator');
+        const sectionProxy = document.getElementById('section-proxy');
+
+        function appendLog(text, type = 'normal') {
+            let colorClass = "text-slate-400";
+            if (type === 'live') colorClass = "text-emerald-400 font-bold";
+            if (type === 'info') colorClass = "text-blue-400 font-semibold";
+
+            logTerminal.innerHTML += `<div class="${colorClass}">> ${text}</div>`;
+            logTerminal.scrollTop = logTerminal.scrollHeight;
+        }
+
+        ipcRenderer.on('scrape-log', (event, message) => {
+            let type = 'normal';
+            if (message.includes('Successfully') || message.includes('verified')) type = 'live';
+            else if (message.includes('Connecting') || message.includes('refreshing')) type = 'info';
+            appendLog(message, type);
+        });
+
+        window.switchTab = function(tab) {
+            const tabProxy = document.getElementById('tab-proxy');
+            const tabUA = document.getElementById('tab-ua');
+            const secUA = document.getElementById('section-ua');
+
+            if (tab === 'proxy') {
+                tabProxy.className = "py-2 text-xs font-bold rounded-xl bg-blue-600 text-white transition flex items-center justify-center gap-1.5 shadow-md";
+                tabUA.className = "py-2 text-xs font-bold rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5";
+                sectionProxy.classList.remove('hidden');
+                secUA.classList.add('hidden');
+            } else {
+                tabUA.className = "py-2 text-xs font-bold rounded-xl bg-indigo-600 text-white transition flex items-center justify-center gap-1.5 shadow-md";
+                tabProxy.className = "py-2 text-xs font-bold rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5";
+                secUA.classList.remove('hidden');
+                sectionProxy.classList.add('hidden');
+            }
+        };
+
+        // Sync Cloud Proxies Handler (Supabase)
+        document.getElementById('btn-sync').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-sync');
+
+            btn.disabled = true;
+            sectionProxy.classList.add('processing-glow');
+            logIndicator.className = "w-2 h-2 rounded-full bg-blue-400 animate-ping inline-block";
+            
+            logTerminal.innerHTML = "";
+            appendLog("Connecting to Supabase Cloud Pool...", "info");
+
+            const res = await ipcRenderer.invoke('fetch-cloud-proxies');
+
+            sectionProxy.classList.remove('processing-glow');
+            logIndicator.className = "w-2 h-2 rounded-full bg-slate-600 inline-block";
+
+            if (res.success) {
+                currentValidProxiesText = res.validProxies.join('\n');
+                document.getElementById('output-proxies').value = currentValidProxiesText;
+                
+                document.getElementById('stat-total').innerText = res.stats.totalScraped;
+                document.getElementById('stat-live').innerText = res.stats.live > 0 ? "Online" : "Empty";
+                document.getElementById('stat-duration').innerText = res.stats.duration + 's';
+
+                appendLog(`Sync complete. Loaded ${res.stats.live} secure cloud proxies.`, "live");
+            } else {
+                appendLog(`Sync failed from server.`, "info");
+            }
+
+            btn.disabled = false;
+            lucide.createIcons();
+        });
+
+        // User-Agent Generator Handler
+        document.getElementById('btn-generate-ua').addEventListener('click', async () => {
+            const count = parseInt(document.getElementById('input-ua-count').value) || 20;
+            const btn = document.getElementById('btn-generate-ua');
+            
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Generating UA...`;
+            const res = await ipcRenderer.invoke('generate-uas', count);
+
+            if (res.success) {
+                currentUAsText = res.uas.join('\n');
+                document.getElementById('output-uas').value = currentUAsText;
+            }
+            btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i> Generate User-Agents Pool`;
+            lucide.createIcons();
+        });
+
+        // Export Proxy to TXT
+        document.getElementById('btn-export-proxy').addEventListener('click', async () => {
+            if (!currentValidProxiesText) return alert('No cloud proxies to export.');
+            const res = await ipcRenderer.invoke('export-to-txt', {
+                content: currentValidProxiesText,
+                defaultName: 'cloud_verified_proxies.txt'
+            });
+            if (res.success) alert(`Saved successfully to:\n${res.path}`);
+        });
+
+        // Export UA to TXT
+        document.getElementById('btn-export-ua').addEventListener('click', async () => {
+            if (!currentUAsText) return alert('No User-Agents to export.');
+            const res = await ipcRenderer.invoke('export-to-txt', {
+                content: currentUAsText,
+                defaultName: 'custom_user_agents.txt'
+            });
+            if (res.success) alert(`Saved successfully to:\n${res.path}`);
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
