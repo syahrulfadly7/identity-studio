@@ -8,7 +8,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     process.exit(1);
 }
 
-// Header standar untuk koneksi REST API Supabase
 const supabaseHeaders = {
     'apikey': SUPABASE_ANON_KEY,
     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -51,11 +50,9 @@ async function fetchAndSyncProxies() {
         }
 
         if (activeProxies.length > 0) {
-            // 1. Hapus data lama menggunakan REST API Supabase (Delete semua baris di proxy_pool)
             console.log("Clearing old proxy pool in Supabase...");
             await axios.delete(`${SUPABASE_URL}/rest/v1/proxy_pool?id=gt.0`, { headers: supabaseHeaders });
 
-            // 2. Masukkan data baru menggunakan REST API Supabase
             console.log("Inserting new active proxies...");
             await axios.post(`${SUPABASE_URL}/rest/v1/proxy_pool`, activeProxies, { headers: supabaseHeaders });
 
