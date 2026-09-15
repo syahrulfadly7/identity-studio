@@ -1,6 +1,4 @@
-const WebSocket = require('ws');
 const axios = require('axios');
-const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -10,13 +8,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     process.exit(1);
 }
 
-// Mendaftarkan WebSocket secara eksplisit lewat opsi transport untuk Node.js versi lama
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false },
-    realtime: {
-        transport: WebSocket
-    }
-});
+// Header standar untuk koneksi REST API Supabase
+const supabaseHeaders = {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+};
 
 async function fetchAndSyncProxies() {
     console.log("Fetching free proxies from public sources...");
@@ -44,7 +42,7 @@ async function fetchAndSyncProxies() {
                     proxy_address: proxy,
                     latency: latency,
                     status: 'active',
-                    updated_at: new Date()
+                    updated_at: new Date().toISOString()
                 });
                 console.log(`[LIVE] ${proxy} - Latency: ${latency}ms`);
             } catch (err) {
@@ -53,17 +51,21 @@ async function fetchAndSyncProxies() {
         }
 
         if (activeProxies.length > 0) {
-            await supabase.from('proxy_pool').delete().neq('id', 0);
+            // 1. Hapus data lama menggunakan REST API Supabase (Delete semua baris di proxy_pool)
+            console.log("Clearing old proxy pool in Supabase...");
+            await axios.delete(`${SUPABASE_URL}/rest/v1/proxy_pool?id=gt.0`, { headers: supabaseHeaders });
 
-            const { error } = await supabase.from('proxy_pool').insert(activeProxies);
-            if (error) throw error;
-            console.log(`Successfully synced ${activeProxies.length} active proxies to Supabase!`);
+            // 2. Masukkan data baru menggunakan REST API Supabase
+            console.log("Inserting new active proxies...");
+            await axios.post(`${SUPABASE_URL}/rest/v1/proxy_pool`, activeProxies, { headers: supabaseHeaders });
+
+            console.log(`Successfully synced ${activeProxies.length} active proxies to Supabase via REST API!`);
         } else {
             console.log("No active proxies found during this run.");
         }
 
     } catch (err) {
-        console.error("Error during proxy synchronization:", err.message);
+        console.error("Error during proxy synchronization:", err.response?.data || err.message);
         process.exit(1);
     }
 }
