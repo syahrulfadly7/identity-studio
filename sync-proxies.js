@@ -1,3 +1,8 @@
+// --- POLYFILL WEBSOCKET UNTUK SUPABASE ---
+const WebSocket = require('ws');
+global.WebSocket = WebSocket;
+// ----------------------------------------
+
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -9,16 +14,16 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false }
+});
 
 async function fetchAndSyncProxies() {
     console.log("Fetching free proxies from public sources...");
     try {
-        // Mengambil daftar proxy publik gratis
         const response = await axios.get('https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt', { timeout: 10000 });
         const proxyLines = response.data.split('\n').map(p => p.trim()).filter(Boolean);
         
-        // Ambil sampel 30 proxy teratas untuk diuji
         const selectedProxies = proxyLines.slice(0, 30);
         console.log(`Found ${selectedProxies.length} proxies to verify.`);
 
@@ -27,7 +32,6 @@ async function fetchAndSyncProxies() {
         for (let proxy of selectedProxies) {
             const startTime = Date.now();
             try {
-                // Uji koneksi proxy (uji latensi sederhana ke httpbin)
                 await axios.get('https://httpbin.org/ip', {
                     proxy: {
                         host: proxy.split(':')[0],
@@ -49,11 +53,8 @@ async function fetchAndSyncProxies() {
         }
 
         if (activeProxies.length > 0) {
-            // Hapus data lama atau perbarui tabel proxy_pool di Supabase
-            // (Opsional: Bersihkan status lama terlebih dahulu)
-            await supabase.from('proxy_pool').delete().neq('id', 0); // Hapus semua data lama
+            await supabase.from('proxy_pool').delete().neq('id', 0);
 
-            // Masukkan proxy aktif yang baru
             const { error } = await supabase.from('proxy_pool').insert(activeProxies);
             if (error) throw error;
             console.log(`Successfully synced ${activeProxies.length} active proxies to Supabase!`);
