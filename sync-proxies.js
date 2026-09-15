@@ -1,8 +1,3 @@
-// --- POLYFILL WEBSOCKET UNTUK SUPABASE ---
-const WebSocket = require('ws');
-global.WebSocket = WebSocket;
-// ----------------------------------------
-
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -14,8 +9,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     process.exit(1);
 }
 
+// Menonaktifkan realtime agar aman dan tidak mencari modul WebSocket di server cloud
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false }
+    auth: { persistSession: false },
+    realtime: { enabled: false }
 });
 
 async function fetchAndSyncProxies() {
